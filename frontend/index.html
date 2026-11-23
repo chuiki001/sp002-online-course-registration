@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SP-002 | Online Course Registration Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            surface: {
+              950: '#090D16',
+              900: '#0F1623',
+              850: '#151E2E',
+              800: '#1C273B',
+              700: '#27354F',
+            },
+            accent: {
+              500: '#3B82F6',
+              400: '#60A5FA',
+              emerald: '#10B981',
+              amber: '#F59E0B',
+              rose: '#F43F5E',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #090D16; color: #E2E8F0; }
+    .glass-panel {
+      background: linear-gradient(180deg, rgba(21, 30, 46, 0.92) 0%, rgba(15, 22, 35, 0.96) 100%);
+      border: 1px solid rgba(148, 163, 184, 0.12);
+      box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+    }
+    .subtle-border { border: 1px solid rgba(148, 163, 184, 0.10); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090D16; }
+    ::-webkit-scrollbar-thumb { background: #27354F; border-radius: 3px; }
+    @media print {
+      body { background: #ffffff !important; color: #0f172a !important; }
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      .glass-panel { background: #ffffff !important; border: 1px solid #cbd5e1 !important; box-shadow: none !important; color: #0f172a !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased selection:bg-blue-500/30 selection:text-blue-200">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden max-w-md rounded-xl px-4 py-3 text-sm font-medium shadow-2xl transition-all duration-200"></div>
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-surface-950/90 backdrop-blur-md no-print">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6">
+      <div class="flex items-center gap-3.5">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600/20 border border-blue-500/30 font-mono text-xs font-bold text-blue-400">
+          SP02
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm font-semibold tracking-tight text-slate-100 sm:text-base">Course Registration Portal</h1>
+            <span id="semester-badge" class="rounded-full bg-emerald-500/10 px-2.5 py-0.5 font-mono text-[11px] font-medium text-emerald-400 border border-emerald-500/20">
+              LOADING...
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">Air Force Institute of Technology • Dept. of Computer Science</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="/docs" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 rounded-lg bg-surface-850 px-3 py-1.5 text-xs font-medium text-slate-300 subtle-border hover:bg-surface-800 hover:text-white transition">
+          <span class="h-1.5 w-1.5 rounded-full bg-blue-400"></span>
+          Swagger API
+        </a>
+        <div id="user-pill" class="hidden items-center gap-3">
+          <div class="text-right hidden sm:block">
+            <div id="nav-user-name" class="text-xs font-semibold text-slate-200"></div>
+            <div id="nav-user-meta" class="font-mono text-[11px] text-slate-400"></div>
+          </div>
+          <button onclick="logout()" class="rounded-lg bg-rose-500/10 px-3 py-1.5 text-xs font-medium text-rose-400 border border-rose-500/20 hover:bg-rose-500/20 transition">
+            Sign Out
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- AUTH / ROLE SWITCHER VIEW -->
+  <main id="auth-view" class="mx-auto flex min-h-[calc(100vh-68px)] max-w-6xl items-center justify-center px-4 py-10">
+    <div class="grid w-full grid-cols-1 gap-8 lg:grid-cols-12">
+      <!-- Left Overview -->
+      <div class="flex flex-col justify-center lg:col-span-7 space-y-6">
+        <div class="inline-flex w-fit items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 font-mono text-xs text-blue-400 border border-blue-500/20">
+          PROJECT ID: SP-002 • 13-WEEK SE CAPSTONE
+        </div>
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          Automated Academic Registration &amp; Rule Validation Engine
+        </h2>
+        <p class="text-sm leading-relaxed text-slate-400 sm:text-base">
+          Real-time enforcement of prerequisite chains, credit-unit bounds (15–24 CU), lecture timetable conflict detection, atomic seat quotas, and academic advisor approval workflows.
+        </p>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-2">
+          <div class="glass-panel rounded-xl p-4">
+            <div class="font-mono text-xs text-blue-400">01 / VALIDATION</div>
+            <div class="mt-1 text-sm font-semibold text-slate-100">SOLID Strategy Rules</div>
+            <div class="mt-1 text-xs text-slate-400">Instant clash, quota &amp; prerequisite checks.</div>
+          </div>
+          <div class="glass-panel rounded-xl p-4">
+            <div class="font-mono text-xs text-emerald-400">02 / WORKFLOW</div>
+            <div class="mt-1 text-sm font-semibold text-slate-100">Advisor Sign-Off</div>
+            <div class="mt-1 text-xs text-slate-400">Auditable DRAFT → SUBMITTED → APPROVED lifecycle.</div>
+          </div>
+          <div class="glass-panel rounded-xl p-4">
+            <div class="font-mono text-xs text-amber-400">03 / SECURITY</div>
+            <div class="mt-1 text-sm font-semibold text-slate-100">JWT &amp; Strict RBAC</div>
+            <div class="mt-1 text-xs text-slate-400">Role-isolated Student, Advisor &amp; Admin portals.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Login Card -->
+      <div class="lg:col-span-5">
+        <div class="glass-panel rounded-2xl p-6 sm:p-8">
+          <h3 class="text-lg font-semibold text-white">Portal Authentication</h3>
+          <p class="mt-1 text-xs text-slate-400">Sign in with institutional credentials or select a demo role below.</p>
+
+          <form id="login-form" class="mt-6 space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-slate-300">Institutional Email</label>
+              <input id="login-email" type="email" required value="u23cs1038@afit.edu.ng"
+                class="mt-1.5 w-full rounded-xl bg-surface-950 px-3.5 py-2.5 text-sm text-slate-100 subtle-border focus:border-blue-500 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-300">Password</label>
+              <input id="login-password" type="password" required value="student123"
+                class="mt-1.5 w-full rounded-xl bg-surface-950 px-3.5 py-2.5 text-sm text-slate-100 subtle-border focus:border-blue-500 focus:outline-none" />
+            </div>
+            <button type="submit"
+              class="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-500 transition">
+              Authenticate &amp; Enter Portal
+            </button>
+          </form>
+
+          <!-- One-Click Demo Accounts for Presentation -->
+          <div class="mt-6 border-t border-slate-800 pt-5">
+            <div class="font-mono text-[11px] uppercase tracking-wider text-slate-400">Quick-Fill Demo Personas</div>
+            <div class="mt-3 grid grid-cols-1 gap-2">
+              <button type="button" onclick="fillDemo('u23cs1038@afit.edu.ng', 'student123')"
+                class="flex items-center justify-between rounded-xl bg-surface-850/80 px-3.5 py-2.5 text-left text-xs subtle-border hover:bg-surface-800 transition">
+                <div>
+                  <div class="font-semibold text-slate-200">Student — Chika Praise (U23CS1038)</div>
+                  <div class="text-slate-400">400 Level • Computer Science</div>
+                </div>
+                <span class="rounded bg-blue-500/15 px-2 py-0.5 font-mono text-[10px] text-blue-400">STUDENT</span>
+              </button>
+              <button type="button" onclick="fillDemo('advisor@afit.edu.ng', 'advisor123')"
+                class="flex items-center justify-between rounded-xl bg-surface-850/80 px-3.5 py-2.5 text-left text-xs subtle-border hover:bg-surface-800 transition">
+                <div>
+                  <div class="font-semibold text-slate-200">Advisor — Dr. Amina Musa</div>
+                  <div class="text-slate-400">Level Coordinator • Review Queue</div>
+                </div>
+                <span class="rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-400">ADVISOR</span>
+              </button>
+              <button type="button" onclick="fillDemo('admin@afit.edu.ng', 'admin123')"
+                class="flex items-center justify-between rounded-xl bg-surface-850/80 px-3.5 py-2.5 text-left text-xs subtle-border hover:bg-surface-800 transition">
+                <div>
+                  <div class="font-semibold text-slate-200">Admin — Prof. Ibrahim Danjuma</div>
+                  <div class="text-slate-400">Catalog, Quotas &amp; Window Control</div>
+                </div>
+                <span class="rounded bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] text-amber-400">ADMIN</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ==================== STUDENT WORKSPACE ==================== -->
+  <section id="student-view" class="hidden mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+    <!-- Top KPI Bar -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 no-print">
+      <div class="glass-panel rounded-xl p-4">
+        <div class="text-xs text-slate-400">Registration Status</div>
+        <div class="mt-1.5 flex items-center gap-2">
+          <span id="stu-status-badge" class="rounded-md px-2.5 py-1 font-mono text-xs font-bold">DRAFT</span>
+        </div>
+        <div id="stu-remark-text" class="mt-1.5 text-xs text-slate-400 truncate">No advisor remarks yet</div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4">
+        <div class="flex items-center justify-between text-xs text-slate-400">
+          <span>Selected Credit Load</span>
+          <span id="stu-cu-bounds" class="font-mono text-[11px]">Min 15 / Max 24</span>
+        </div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span id="stu-cu-total" class="font-mono text-2xl font-bold text-white">0</span>
+          <span class="text-xs text-slate-400">Credit Units</span>
+        </div>
+        <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-950">
+          <div id="stu-cu-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4">
+        <div class="text-xs text-slate-400">Courses in Slip</div>
+        <div class="mt-1.5 flex items-baseline gap-2">
+          <span id="stu-course-count" class="font-mono text-2xl font-bold text-white">0</span>
+          <span class="text-xs text-slate-400">Selected Courses</span>
+        </div>
+        <div class="mt-1.5 font-mono text-[11px] text-emerald-400">Passed 300L: CSC301, 303, 305, 307</div>
+      </div>
+
+      <div class="glass-panel rounded-xl p-4 flex flex-col justify-between">
+        <div class="text-xs text-slate-400">Quick Actions</div>
+        <div class="mt-2 flex gap-2">
+          <button id="btn-submit-reg" onclick="submitRegistration()"
+            class="flex-1 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed transition">
+            Submit Slip
+          </button>
+          <button onclick="window.print()"
+            class="rounded-xl bg-surface-800 px-3 py-2 text-xs font-medium text-slate-200 subtle-border hover:bg-surface-700 transition">
+            Print Slip
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Validation Diagnostics Banner -->
+    <div id="stu-validation-box" class="glass-panel rounded-xl p-4 no-print"></div>
+
+    <!-- Main Split: Course Catalog (Left) + Registration Cart & Live Weekly Timetable (Right) -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <!-- Left: Course Catalog -->
+      <div class="lg:col-span-7 glass-panel rounded-2xl p-5 no-print">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 class="text-base font-semibold text-white">Semester Course Catalog</h3>
+            <p class="text-xs text-slate-400">Includes deliberate clash, prerequisite &amp; quota test cases.</p>
+          </div>
+          <div class="flex gap-2">
+            <input id="catalog-search" oninput="loadCourses()" type="text" placeholder="Search code or title..."
+              class="w-44 rounded-lg bg-surface-950 px-3 py-1.5 text-xs text-slate-200 subtle-border focus:border-blue-500 focus:outline-none" />
+            <select id="catalog-level" onchange="loadCourses()"
+              class="rounded-lg bg-surface-950 px-2.5 py-1.5 text-xs text-slate-200 subtle-border focus:border-blue-500 focus:outline-none">
+              <option value="">All Levels</option>
+              <option value="400">400 Level</option>
+              <option value="300">300 Level</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="catalog-list" class="mt-4 space-y-2.5 max-h-[540px] overflow-y-auto pr-1"></div>
+      </div>
+
+      <!-- Right: Selected Courses & Weekly Visual Timetable -->
+      <div class="lg:col-span-5 space-y-6">
+        <div class="glass-panel rounded-2xl p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-semibold text-white">Official Registration Slip</h3>
+              <p id="slip-header-meta" class="font-mono text-xs text-slate-400"></p>
+            </div>
+            <span id="slip-cu-pill" class="rounded-lg bg-blue-500/15 px-2.5 py-1 font-mono text-xs font-semibold text-blue-400">0 CU</span>
+          </div>
+
+          <div class="mt-4 overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400">
+                  <th class="pb-2 font-medium">Code</th>
+                  <th class="pb-2 font-medium">Course Title</th>
+                  <th class="pb-2 font-medium">Slot</th>
+                  <th class="pb-2 text-right font-medium">CU</th>
+                  <th class="pb-2 text-right font-medium no-print">Action</th>
+                </tr>
+              </thead>
+              <tbody id="cart-table-body" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Weekly Schedule Matrix -->
+        <div class="glass-panel rounded-2xl p-5 no-print">
+          <h3 class="text-sm font-semibold text-white">Weekly Lecture Schedule Preview</h3>
+          <p class="text-xs text-slate-400">Real-time visualization of selected lecture windows.</p>
+          <div id="timetable-grid" class="mt-3 space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ADVISOR WORKSPACE ==================== -->
+  <section id="advisor-view" class="hidden mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+    <div class="glass-panel rounded-2xl p-6">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-white">Academic Advisor Review Queue</h3>
+          <p class="text-xs text-slate-400">Inspect advisee course selections, prerequisite compliance, and approve or reject slips.</p>
+        </div>
+        <button onclick="loadAdvisorSubmissions()" class="w-fit rounded-xl bg-surface-800 px-3.5 py-2 text-xs font-medium text-slate-200 subtle-border hover:bg-surface-700">
+          Refresh Queue
+        </button>
+      </div>
+      <div id="advisor-list" class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2"></div>
+    </div>
+  </section>
+
+  <!-- ==================== ADMIN WORKSPACE ==================== -->
+  <section id="admin-view" class="hidden mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
+    <!-- Analytics Row -->
+    <div id="admin-stats-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <!-- Create Course Form -->
+      <div class="lg:col-span-5 glass-panel rounded-2xl p-6 space-y-5">
+        <div>
+          <h3 class="text-base font-semibold text-white">Registration Window Control</h3>
+          <p class="text-xs text-slate-400">Toggle active semester state (OPEN, ADD_DROP, CLOSED).</p>
+          <div class="mt-3 flex gap-2">
+            <button onclick="setSemesterStatus('OPEN')" class="flex-1 rounded-lg bg-emerald-500/15 py-2 font-mono text-xs font-semibold text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25">OPEN</button>
+            <button onclick="setSemesterStatus('ADD_DROP')" class="flex-1 rounded-lg bg-amber-500/15 py-2 font-mono text-xs font-semibold text-amber-400 border border-amber-500/30 hover:bg-amber-500/25">ADD_DROP</button>
+            <button onclick="setSemesterStatus('CLOSED')" class="flex-1 rounded-lg bg-rose-500/15 py-2 font-mono text-xs font-semibold text-rose-400 border border-rose-500/30 hover:bg-rose-500/25">CLOSED</button>
+          </div>
+        </div>
+
+        <form id="create-course-form" class="border-t border-slate-800 pt-5 space-y-3">
+          <h3 class="text-base font-semibold text-white">Add New Semester Course</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] text-slate-400">Course Code</label>
+              <input id="c-code" required placeholder="CSC421" class="mt-1 w-full rounded-lg bg-surface-950 px-3 py-2 text-xs text-white subtle-border" />
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400">Credit Units</label>
+              <input id="c-cu" type="number" min="1" max="6" value="3" required class="mt-1 w-full rounded-lg bg-surface-950 px-3 py-2 text-xs text-white subtle-border" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400">Course Title</label>
+            <input id="c-title" required placeholder="Distributed Cloud Systems" class="mt-1 w-full rounded-lg bg-surface-950 px-3 py-2 text-xs text-white subtle-border" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-[11px] text-slate-400">Level</label>
+              <select id="c-level" class="mt-1 w-full rounded-lg bg-surface-950 px-3 py-2 text-xs text-white subtle-border">
+                <option value="400">400</option>
+                <option value="300">300</option>
+                <option value="200">200</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400">Seat Capacity</label>
+              <input id="c-cap" type="number" min="1" max="500" value="50" required class="mt-1 w-full rounded-lg bg-surface-950 px-3 py-2 text-xs text-white subtle-border" />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div>
+              <label class="text-[11px] text-slate-400">Day</label>
+              <select id="c-day" class="mt-1 w-full rounded-lg bg-surface-950 px-2.5 py-2 text-xs text-white subtle-border">
+                <option>MON</option><option>TUE</option><option>WED</option><option>THU</option><option>FRI</option><option>SAT</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400">Start</label>
+              <input id="c-start" type="time" value="10:00" required class="mt-1 w-full rounded-lg bg-surface-950 px-2.5 py-2 text-xs text-white subtle-border" />
+            </div>
+            <div>
+              <label class="text-[11px] text-slate-400">End</label>
+              <input id="c-end" type="time" value="12:00" required class="mt-1 w-full rounded-lg bg-surface-950 px-2.5 py-2 text-xs text-white subtle-border" />
+            </div>
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400">Prerequisites (comma-separated, optional)</label>
+            <input id="c-prereqs" placeholder="CSC301, CSC305" class="mt-1 w-full rounded-lg bg-surface-950 px-3 py-2 text-xs text-white subtle-border" />
+          </div>
+          <button type="submit" class="w-full rounded-xl bg-blue-600 py-2.5 text-xs font-semibold text-white hover:bg-blue-500 transition">
+            Publish Course to Catalog
+          </button>
+        </form>
+      </div>
+
+      <!-- Admin Course Roster Table -->
+      <div class="lg:col-span-7 glass-panel rounded-2xl p-6">
+        <h3 class="text-base font-semibold text-white">Active Semester Course Roster &amp; Seat Utilization</h3>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="pb-2.5">Code</th>
+                <th class="pb-2.5">Title</th>
+                <th class="pb-2.5">CU</th>
+                <th class="pb-2.5">Schedule</th>
+                <th class="pb-2.5">Prereqs</th>
+                <th class="pb-2.5 text-right">Seats</th>
+              </tr>
+            </thead>
+            <tbody id="admin-course-table" class="divide-y divide-slate-800/60"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const API = '/api/v1';
+    let authState = JSON.parse(localStorage.getItem('sp002_auth') || 'null');
+    let currentReg = null;
+
+    function showToast(msg, type = 'info') {
+      const el = document.getElementById('toast');
+      const styles = {
+        success: 'bg-emerald-950/95 text-emerald-200 border border-emerald-500/40',
+        error: 'bg-rose-950/95 text-rose-200 border border-rose-500/40',
+        info: 'bg-surface-850 text-slate-100 border border-blue-500/40'
+      };
+      el.className = `fixed bottom-5 right-5 z-50 max-w-md rounded-xl px-4 py-3 text-xs font-medium shadow-2xl ${styles[type] || styles.info}`;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => el.classList.add('hidden'), 4200);
+    }
+
+    async function apiFetch(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      if (authState?.access_token) headers['Authorization'] = `Bearer ${authState.access_token}`;
+      const res = await fetch(`${API}${path}`, { ...options, headers });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+      return data;
+    }
+
+    function fillDemo(email, password) {
+      document.getElementById('login-email').value = email;
+      document.getElementById('login-password').value = password;
+    }
+
+    async function loadSemesterBadge() {
+      try {
+        const sem = await apiFetch('/semester/active');
+        const badge = document.getElementById('semester-badge');
+        badge.textContent = `${sem.code} • ${sem.status}`;
+      } catch (e) {}
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+        const data = await apiFetch('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        authState = data;
+        localStorage.setItem('sp002_auth', JSON.stringify(data));
+        showToast(`Authenticated as ${data.full_name} (${data.role})`, 'success');
+        renderApp();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    function logout() {
+      authState = null;
+      localStorage.removeItem('sp002_auth');
+      renderApp();
+    }
+
+    async function renderApp() {
+      await loadSemesterBadge();
+      const authView = document.getElementById('auth-view');
+      const stuView = document.getElementById('student-view');
+      const advView = document.getElementById('advisor-view');
+      const admView = document.getElementById('admin-view');
+      const userPill = document.getElementById('user-pill');
+
+      [authView, stuView, advView, admView].forEach(el => el.classList.add('hidden'));
+
+      if (!authState) {
+        userPill.classList.add('hidden');
+        userPill.classList.remove('flex');
+        authView.classList.remove('hidden');
+        return;
+      }
+
+      userPill.classList.remove('hidden');
+      userPill.classList.add('flex');
+      document.getElementById('nav-user-name').textContent = authState.full_name;
+      document.getElementById('nav-user-meta').textContent = authState.matric_number
+        ? `${authState.matric_number} • ${authState.role}`
+        : authState.role;
+
+      if (authState.role === 'STUDENT') {
+        stuView.classList.remove('hidden');
+        await refreshStudentWorkspace();
+      } else if (authState.role === 'ADVISOR') {
+        advView.classList.remove('hidden');
+        await loadAdvisorSubmissions();
+      } else if (authState.role === 'ADMIN') {
+        admView.classList.remove('hidden');
+        await refreshAdminWorkspace();
+      }
+    }
+
+    // ==================== STUDENT LOGIC ====================
+    async function refreshStudentWorkspace() {
+      currentReg = await apiFetch('/registrations/me');
+      renderStudentSlip(currentReg);
+      await loadCourses();
+    }
+
+    function renderStudentSlip(reg) {
+      const statusColors = {
+        DRAFT: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
+        SUBMITTED: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+        APPROVED: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+        REJECTED: 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+      };
+      const badge = document.getElementById('stu-status-badge');
+      badge.className = `rounded-md px-2.5 py-1 font-mono text-xs font-bold ${statusColors[reg.status] || ''}`;
+      badge.textContent = reg.status;
+
+      document.getElementById('stu-remark-text').textContent = reg.advisor_remark
+        ? `Advisor: ${reg.advisor_remark}`
+        : 'Awaiting completion & submission';
+
+      document.getElementById('stu-cu-total').textContent = reg.total_credits;
+      document.getElementById('stu-cu-bounds').textContent = `Min ${reg.min_credits} / Max ${reg.max_credits}`;
+      document.getElementById('stu-course-count').textContent = reg.items.length;
+      document.getElementById('slip-cu-pill').textContent = `${reg.total_credits} CU`;
+      document.getElementById('slip-header-meta').textContent = `${reg.student_name} (${reg.matric_number}) • ${reg.semester_code}`;
+
+      const pct = Math.min(100, Math.round((reg.total_credits / reg.max_credits) * 100));
+      const bar = document.getElementById('stu-cu-bar');
+      bar.style.width = `${pct}%`;
+      bar.className = `h-full transition-all duration-300 ${
+        reg.total_credits >= reg.min_credits && reg.total_credits <= reg.max_credits ? 'bg-emerald-500' : 'bg-blue-500'
+      }`;
+
+      const submitBtn = document.getElementById('btn-submit-reg');
+      submitBtn.disabled = reg.validation_errors.length > 0 || reg.status === 'SUBMITTED' || reg.status === 'APPROVED';
+
+      // Validation diagnostics banner
+      const valBox = document.getElementById('stu-validation-box');
+      if (reg.status === 'APPROVED') {
+        valBox.innerHTML = `<div class="flex items-center gap-2 text-xs font-medium text-emerald-400">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+          Official Registration Approved &amp; Locked. You may print your slip for departmental filing.
+        </div>`;
+      } else if (reg.validation_errors.length === 0) {
+        valBox.innerHTML = `<div class="flex items-center gap-2 text-xs font-medium text-emerald-400">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
+          All SOLID validation rules passed (Prerequisites, Credit Load 15–24 CU, Zero Timetable Clashes, Seat Quotas). Ready to submit!
+        </div>`;
+      } else {
+        valBox.innerHTML = `<div class="text-xs font-semibold text-amber-400 mb-1.5">Pending Validation Requirements (${reg.validation_errors.length}):</div>
+          <ul class="list-disc pl-5 space-y-1 text-xs text-slate-300">
+            ${reg.validation_errors.map(e => `<li>${e}</li>`).join('')}
+          </ul>`;
+      }
+
+      // Slip table
+      const tbody = document.getElementById('cart-table-body');
+      if (reg.items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No courses added yet. Select courses from the catalog.</td></tr>`;
+      } else {
+        const locked = reg.status === 'SUBMITTED' || reg.status === 'APPROVED';
+        tbody.innerHTML = reg.items.map(item => `
+          <tr>
+            <td class="py-2.5 font-mono font-semibold text-blue-400">${item.code}</td>
+            <td class="py-2.5 text-slate-200">${item.title}</td>
+            <td class="py-2.5 font-mono text-[11px] text-slate-400">${item.day_of_week} ${item.start_time}</td>
+            <td class="py-2.5 text-right font-mono text-slate-200">${item.credit_units}</td>
+            <td class="py-2.5 text-right no-print">
+              ${locked
+                ? `<span class="text-[11px] text-slate-500">Locked</span>`
+                : `<button onclick="dropCourse('${item.course_id}')" class="rounded bg-rose-500/15 px-2 py-1 text-[11px] font-medium text-rose-400 hover:bg-rose-500/25">Drop</button>`}
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Weekly Timetable Preview
+      const days = ['MON', 'TUE', 'WED', 'THU', 'FRI'];
+      const ttGrid = document.getElementById('timetable-grid');
+      ttGrid.innerHTML = days.map(day => {
+        const dayCourses = reg.items.filter(i => i.day_of_week === day);
+        return `<div class="flex items-center justify-between rounded-lg bg-surface-950/80 px-3 py-2 subtle-border text-xs">
+          <span class="w-12 font-mono font-bold text-slate-400">${day}</span>
+          <div class="flex-1 flex flex-wrap gap-1.5">
+            ${dayCourses.length
+              ? dayCourses.map(c => `<span class="rounded bg-blue-500/15 px-2 py-0.5 font-mono text-[11px] text-blue-300 border border-blue-500/20">${c.code} (${c.start_time}–${c.end_time})</span>`).join('')
+              : `<span class="text-slate-600 text-[11px]">No lectures scheduled</span>`}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function loadCourses() {
+      const q = document.getElementById('catalog-search').value;
+      const level = document.getElementById('catalog-level').value;
+      const params = new URLSearchParams();
+      if (q) params.set('q', q);
+      if (level) params.set('level', level);
+
+      const courses = await apiFetch(`/courses?${params.toString()}`);
+      const selectedIds = new Set((currentReg?.items || []).map(i => i.course_id));
+      const locked = currentReg?.status === 'SUBMITTED' || currentReg?.status === 'APPROVED';
+
+      const listEl = document.getElementById('catalog-list');
+      listEl.innerHTML = courses.map(c => {
+        const isAdded = selectedIds.has(c.id);
+        const isFull = c.available_seats <= 0;
+        return `
+          <div class="flex items-center justify-between gap-3 rounded-xl bg-surface-950/75 p-3.5 subtle-border hover:border-slate-700 transition">
+            <div class="space-y-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-mono text-xs font-bold text-blue-400">${c.code}</span>
+                <span class="text-xs font-semibold text-slate-100">${c.title}</span>
+                <span class="rounded bg-surface-800 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">${c.credit_units} CU</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-3 font-mono text-[11px] text-slate-400">
+                <span>${c.day_of_week} ${c.start_time}–${c.end_time}</span>
+                <span class="${isFull ? 'text-rose-400' : 'text-emerald-400'}">Seats: ${c.available_seats}/${c.capacity}</span>
+                <span>Prereqs: ${c.prerequisites.length ? c.prerequisites.join(', ') : 'None'}</span>
+              </div>
+            </div>
+            <div>
+              ${isAdded
+                ? `<span class="rounded-lg bg-emerald-500/15 px-3 py-1.5 font-mono text-[11px] font-semibold text-emerald-400">Added</span>`
+                : `<button onclick="addCourse('${c.id}')" ${locked ? 'disabled' : ''}
+                    class="rounded-lg bg-blue-600/90 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 transition">
+                    + Add
+                  </button>`}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function addCourse(courseId) {
+      try {
+        currentReg = await apiFetch('/registrations/me/items', {
+          method: 'POST',
+          body: JSON.stringify({ course_id: courseId })
+        });
+        showToast('Course added to registration slip.', 'success');
+        renderStudentSlip(currentReg);
+        await loadCourses();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function dropCourse(courseId) {
+      try {
+        currentReg = await apiFetch(`/registrations/me/items/${courseId}`, { method: 'DELETE' });
+        showToast('Course removed from slip.', 'info');
+        renderStudentSlip(currentReg);
+        await loadCourses();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    async function submitRegistration() {
+      try {
+        currentReg = await apiFetch('/registrations/me/submit', { method: 'POST' });
+        showToast('Registration slip submitted to your Academic Advisor!', 'success');
+        renderStudentSlip(currentReg);
+        await loadCourses();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // ==================== ADVISOR LOGIC ====================
+    async function loadAdvisorSubmissions() {
+      const list = await apiFetch('/advisor/submissions');
+      const container = document.getElementById('advisor-list');
+      if (!list.length) {
+        container.innerHTML = `<div class="text-xs text-slate-400">No advisee records found for this semester.</div>`;
+        return;
+      }
+      container.innerHTML = list.map(reg => `
+        <div class="rounded-xl bg-surface-950/80 p-5 subtle-border space-y-4">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="text-sm font-semibold text-white">${reg.student_name}</div>
+              <div class="font-mono text-xs text-slate-400">${reg.matric_number} • ${reg.level}L • ${reg.total_credits} CU</div>
+            </div>
+            <span class="rounded-md bg-surface-800 px-2.5 py-1 font-mono text-xs font-semibold text-blue-400">${reg.status}</span>
+          </div>
+
+          <div class="space-y-1 border-y border-slate-800 py-3 text-xs">
+            ${reg.items.length
+              ? reg.items.map(i => `<div class="flex justify-between font-mono text-[11px]">
+                  <span class="text-slate-200">${i.code} — ${i.title}</span>
+                  <span class="text-slate-400">${i.credit_units} CU</span>
+                </div>`).join('')
+              : `<div class="text-slate-500">Student has not added courses yet.</div>`}
+          </div>
+
+          ${reg.status === 'SUBMITTED' ? `
+            <div class="space-y-2.5">
+              <input id="remark-${reg.id}" type="text" placeholder="Enter approval note or mandatory rejection reason..."
+                class="w-full rounded-lg bg-surface-900 px-3 py-2 text-xs text-slate-200 subtle-border focus:border-blue-500 focus:outline-none" />
+              <div class="flex gap-2">
+                <button onclick="decideSlip('${reg.id}', 'APPROVED')" class="flex-1 rounded-lg bg-emerald-600 py-2 text-xs font-semibold text-white hover:bg-emerald-500">Approve Slip</button>
+                <button onclick="decideSlip('${reg.id}', 'REJECTED')" class="flex-1 rounded-lg bg-rose-600 py-2 text-xs font-semibold text-white hover:bg-rose-500">Reject Slip</button>
+              </div>
+            </div>
+          ` : `<div class="text-xs text-slate-400">Remark: ${reg.advisor_remark || '—'}</div>`}
+        </div>
+      `).join('');
+    }
+
+    async function decideSlip(regId, decision) {
+      try {
+        const remark = document.getElementById(`remark-${regId}`)?.value || '';
+        await apiFetch(`/advisor/submissions/${regId}/decision`, {
+          method: 'POST',
+          body: JSON.stringify({ decision, remark })
+        });
+        showToast(`Registration marked as ${decision}.`, 'success');
+        await loadAdvisorSubmissions();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    // ==================== ADMIN LOGIC ====================
+    async function refreshAdminWorkspace() {
+      const stats = await apiFetch('/admin/analytics');
+      document.getElementById('admin-stats-grid').innerHTML = `
+        <div class="glass-panel rounded-xl p-4">
+          <div class="text-xs text-slate-400">Active Courses</div>
+          <div class="mt-1 font-mono text-2xl font-bold text-white">${stats.total_courses}</div>
+        </div>
+        <div class="glass-panel rounded-xl p-4">
+          <div class="text-xs text-slate-400">Total Seat Capacity</div>
+          <div class="mt-1 font-mono text-2xl font-bold text-blue-400">${stats.total_enrolled} / ${stats.total_seats}</div>
+        </div>
+        <div class="glass-panel rounded-xl p-4">
+          <div class="text-xs text-slate-400">Seat Utilization</div>
+          <div class="mt-1 font-mono text-2xl font-bold text-emerald-400">${stats.utilization_pct}%</div>
+        </div>
+        <div class="glass-panel rounded-xl p-4">
+          <div class="text-xs text-slate-400">Slips (Sub / App)</div>
+          <div class="mt-1 font-mono text-2xl font-bold text-amber-400">${stats.registrations_by_status.SUBMITTED} / ${stats.registrations_by_status.APPROVED}</div>
+        </div>
+      `;
+
+      const courses = await apiFetch('/courses');
+      document.getElementById('admin-course-table').innerHTML = courses.map(c => `
+        <tr>
+          <td class="py-2.5 font-mono font-semibold text-blue-400">${c.code}</td>
+          <td class="py-2.5 text-slate-200">${c.title}</td>
+          <td class="py-2.5 font-mono">${c.credit_units}</td>
+          <td class="py-2.5 font-mono text-[11px] text-slate-400">${c.day_of_week} ${c.start_time}–${c.end_time}</td>
+          <td class="py-2.5 font-mono text-[11px] text-slate-400">${c.prerequisites.join(', ') || '—'}</td>
+          <td class="py-2.5 text-right font-mono">${c.enrolled_count}/${c.capacity}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function setSemesterStatus(status) {
+      try {
+        await apiFetch('/admin/semester/status', {
+          method: 'PATCH',
+          body: JSON.stringify({ status })
+        });
+        showToast(`Registration window switched to ${status}.`, 'success');
+        await loadSemesterBadge();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    }
+
+    document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const prereqRaw = document.getElementById('c-prereqs').value;
+        const prerequisites = prereqRaw ? prereqRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+        await apiFetch('/admin/courses', {
+          method: 'POST',
+          body: JSON.stringify({
+            code: document.getElementById('c-code').value,
+            title: document.getElementById('c-title').value,
+            credit_units: Number(document.getElementById('c-cu').value),
+            level: Number(document.getElementById('c-level').value),
+            capacity: Number(document.getElementById('c-cap').value),
+            day_of_week: document.getElementById('c-day').value,
+            start_time: document.getElementById('c-start').value,
+            end_time: document.getElementById('c-end').value,
+            prerequisites
+          })
+        });
+        showToast('Course created and published to catalog!', 'success');
+        e.target.reset();
+        await refreshAdminWorkspace();
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    });
+
+    // Boot
+    renderApp();
+  </script>
+</body>
+</html>
