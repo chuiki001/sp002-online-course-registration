@@ -1,9 +1,11 @@
-from contextlib import asynccontextmanager
 import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
 from app.api.routes import router as api_router
 from app.core.config import settings
 from app.core.database import Base, SessionLocal, engine

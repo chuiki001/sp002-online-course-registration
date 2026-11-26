@@ -25,8 +25,7 @@ class ValidationContext:
 
 
 class RegistrationRuleStrategy(Protocol):
-    def validate(self, ctx: ValidationContext) -> list[str]:
-        ...
+    def validate(self, ctx: ValidationContext) -> list[str]: ...
 
 
 class CreditLimitRule:
@@ -34,9 +33,13 @@ class CreditLimitRule:
         total = sum(c.credit_units for c in ctx.selected_courses)
         errors: list[str] = []
         if total < ctx.min_credits:
-            errors.append(f"Total credits ({total} CU) is below minimum required ({ctx.min_credits} CU).")
+            errors.append(
+                f"Total credits ({total} CU) is below minimum required ({ctx.min_credits} CU)."
+            )
         if total > ctx.max_credits:
-            errors.append(f"Total credits ({total} CU) exceeds maximum allowed ({ctx.max_credits} CU).")
+            errors.append(
+                f"Total credits ({total} CU) exceeds maximum allowed ({ctx.max_credits} CU)."
+            )
         return errors
 
 
@@ -44,9 +47,13 @@ class PrerequisiteRule:
     def validate(self, ctx: ValidationContext) -> list[str]:
         errors: list[str] = []
         for course in ctx.selected_courses:
-            missing = [p for p in course.prerequisites if p not in ctx.passed_course_codes]
+            missing = [
+                p for p in course.prerequisites if p not in ctx.passed_course_codes
+            ]
             if missing:
-                errors.append(f"{course.code} requires passed prerequisite(s): {', '.join(missing)}.")
+                errors.append(
+                    f"{course.code} requires passed prerequisite(s): {', '.join(missing)}."
+                )
         return errors
 
 
@@ -57,11 +64,14 @@ class TimetableClashRule:
         for i in range(len(courses)):
             for j in range(i + 1, len(courses)):
                 a, b = courses[i], courses[j]
-                if a.day_of_week == b.day_of_week:
-                    if a.start_minutes < b.end_minutes and b.start_minutes < a.end_minutes:
-                        errors.append(
-                            f"Timetable clash on {a.day_of_week}: {a.code} overlaps with {b.code}."
-                        )
+                if (
+                    a.day_of_week == b.day_of_week
+                    and a.start_minutes < b.end_minutes
+                    and b.start_minutes < a.end_minutes
+                ):
+                    errors.append(
+                        f"Timetable clash on {a.day_of_week}: {a.code} overlaps with {b.code}."
+                    )
         return errors
 
 
@@ -70,7 +80,9 @@ class SeatCapacityRule:
         errors: list[str] = []
         for course in ctx.selected_courses:
             if course.enrolled_count >= course.capacity:
-                errors.append(f"{course.code} has reached full capacity ({course.capacity}/{course.capacity}).")
+                errors.append(
+                    f"{course.code} has reached full capacity ({course.capacity}/{course.capacity})."
+                )
         return errors
 
 
@@ -85,7 +97,9 @@ class CompositeRegistrationValidator:
         return violations
 
 
-def build_default_validator(enforce_credit_bounds: bool = True) -> CompositeRegistrationValidator:
+def build_default_validator(
+    enforce_credit_bounds: bool = True,
+) -> CompositeRegistrationValidator:
     rules: list[RegistrationRuleStrategy] = [
         PrerequisiteRule(),
         TimetableClashRule(),

@@ -1,4 +1,5 @@
 import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -6,7 +7,6 @@ os.environ["DATABASE_URL"] = "sqlite:///./test_sp002.db"
 
 from app.core.database import Base, SessionLocal, engine
 from app.core.validators import (
-    CompositeRegistrationValidator,
     CourseSlot,
     CreditLimitRule,
     PrerequisiteRule,
@@ -86,27 +86,47 @@ def test_end_to_end_registration_validation_submission_and_approval(client: Test
     by_code = {c["code"]: c for c in courses}
 
     # 1. Add CSC401 (valid)
-    r1 = client.post("/api/v1/registrations/me/items", json={"course_id": by_code["CSC401"]["id"]}, headers=stu_headers)
+    r1 = client.post(
+        "/api/v1/registrations/me/items",
+        json={"course_id": by_code["CSC401"]["id"]},
+        headers=stu_headers,
+    )
     assert r1.status_code == 200
 
     # 2. Attempt CSC413 (timetable clash with CSC401) -> 422
-    r_clash = client.post("/api/v1/registrations/me/items", json={"course_id": by_code["CSC413"]["id"]}, headers=stu_headers)
+    r_clash = client.post(
+        "/api/v1/registrations/me/items",
+        json={"course_id": by_code["CSC413"]["id"]},
+        headers=stu_headers,
+    )
     assert r_clash.status_code == 422
     assert "Timetable clash" in r_clash.json()["detail"]
 
     # 3. Attempt CSC415 (unmet prerequisite CSC399) -> 422
-    r_prereq = client.post("/api/v1/registrations/me/items", json={"course_id": by_code["CSC415"]["id"]}, headers=stu_headers)
+    r_prereq = client.post(
+        "/api/v1/registrations/me/items",
+        json={"course_id": by_code["CSC415"]["id"]},
+        headers=stu_headers,
+    )
     assert r_prereq.status_code == 422
     assert "CSC399" in r_prereq.json()["detail"]
 
     # 4. Attempt CSC417 (full seat capacity) -> 422
-    r_full = client.post("/api/v1/registrations/me/items", json={"course_id": by_code["CSC417"]["id"]}, headers=stu_headers)
+    r_full = client.post(
+        "/api/v1/registrations/me/items",
+        json={"course_id": by_code["CSC417"]["id"]},
+        headers=stu_headers,
+    )
     assert r_full.status_code == 422
     assert "capacity" in r_full.json()["detail"]
 
     # 5. Add 5 more valid courses to hit 18 CU (within 15..24 CU)
     for code in ["CSC403", "CSC405", "CSC407", "CSC409", "CSC411"]:
-        res = client.post("/api/v1/registrations/me/items", json={"course_id": by_code[code]["id"]}, headers=stu_headers)
+        res = client.post(
+            "/api/v1/registrations/me/items",
+            json={"course_id": by_code[code]["id"]},
+            headers=stu_headers,
+        )
         assert res.status_code == 200
 
     # 6. Submit slip
